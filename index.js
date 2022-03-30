@@ -1,6 +1,10 @@
 const express = require('express');
 const app = express();
 
+//Habilitar req.body:
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use('/api/v1/', require('./routes/users.route'));
 
 const PORT = process.env.PORT || 3000;
