@@ -1,10 +1,10 @@
-const { getUserDB } = require('../database');
-const { nanoid } = require('nanoid');
+const { getUsersDB, createUserDB, getUserDB } = require('../database');
+const jwt = require('jsonwebtoken');
 var bcrypt = require('bcryptjs');
 const path = require('path');
 
 const getUsers = async (req, res) => {
-  const response = await getUserDB;
+  const response = await getUsersDB();
   if (!response.ok) {
     return res.status(500).json({ error: response.error });
   }
@@ -13,52 +13,38 @@ const getUsers = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    // Validando que existan todos los campos
-    if (
-      !req.body?.nombre ||
-      !req.body?.password ||
-      !req.body?.email ||
-      !req.body?.anos_experiencia ||
-      !req.body?.especialidad ||
-      !req.files?.foto
-    ) {
-      throw new Error('Todos los campos son obligatorios.');
-    }
-
     const { nombre, password, email, anos_experiencia, especialidad } =
       req.body;
-    // Validando que no hayan campos en blanco
-    // La negación (!) de trim() devuelve true si el string se compone sólo de espacios
-    if (
-      !nombre.trim() ||
-      !password.trim() ||
-      !email.trim() ||
-      !anos_experiencia.trim() ||
-      !especialidad.trim()
-    ) {
-      throw new Error('Uno o más campos obligatorios viene en blanco.');
-    }
-
-    // Validando extensión y peso de foto
     const { foto } = req.files;
-    const mimeTypes = ['image/jpeg', 'image/png'];
-    if (!mimeTypes.includes(foto.mimetype)) {
-      throw new Error('La foto debe ser .jpg, .jpeg o .png.');
-    }
-    if (foto.size > 5 * 1024 * 1024) {
-      throw new Error('La foto no puede pesar más de 5MB.');
-    }
-
-    // Construir nombre de foto
-    const pathFoto = `${nanoid()}.${foto.mimetype.split('/')[1]}`;
-
     //Encriptar contraseña
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
+    const pathPhoto = req.pathPhoto;
+
+    const response = await createUserDB({
+      nombre,
+      email,
+      anos_experiencia,
+      especialidad,
+      hashPassword,
+      pathPhoto,
+    });
+
+    if (!response.ok) {
+      throw new Error(response.error);
+    }
 
     //Guardamos la foto en el servidor (usamos path.join para juntar rutas)
-    foto.mv(path.join(__dirname, '../public/avatars/', pathFoto), (err) => {
+    foto.mv(path.join(__me, '../public/avatars/', pathPhoto), (err) => {
       if (err) throw new Error('No se puede guardar la imagen.');
+    });
+
+    const payload = { id: response.id };
+    const token = jwt.sign(payload, process.env.JWT_SECRET);
+
+    return res.json({
+      ok: true,
+      token,
     });
   } catch (error) {
     return res.status(400).json({
@@ -66,8 +52,52 @@ const createUser = async (req, res) => {
       error: error.message,
     });
   }
-
-  res.json(req.body);
 };
 
-module.exports = { getUsers, createUser };
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    //Validacion de campos del body
+    if (!password?.trim() || !email?.trim()) {
+      throw new Error('Uno o más campos obligatorios viene en blanco.');
+    }
+
+    //Revisar si email existe en DB
+    const response = await getUserDB(email);
+
+    if (!response.ok) {
+      throw new Error(response.error);
+    }
+
+    // return res.json(response);
+
+    //Comparar password con el hashpassword en DB
+
+    const { data } = response;
+    const comparePassword = await bcrypt.compare(password, data.password);
+
+    if (!comparePassword) {
+      throw new Error('Contraseña incorrecta');
+    }
+
+    //Se genera JWT
+
+    const payload = { id: data.id };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
+
+    return res.json({
+      ok: true,
+      token,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { getUsers, createUser, loginUser };

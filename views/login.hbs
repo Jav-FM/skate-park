@@ -1,0 +1,22 @@
+<h1>Login</h1>
+
+<form id='formulario'>
+    <input type='email' placeholder='Ingrese email' name='email' class='form-control mb-2' />
+    <input type='password' placeholder='Ingrese password' name='password' class='form-control mb-2' />
+    <button class='btn btn-primary' type='submit'>Ingresar</button>
+</form>
+
+<script>
+    const formulario = document.getElementById('formulario');
+    formulario.addEventListener('submit', async (e) => {
+        e.preventDefault(); const
+            formData = new FormData(formulario); try {
+                const res = await
+                    fetch('/api/v1/login', { method: 'post', body: formData, }); const data =
+                        await res.json(); if (!data.ok) {
+                            console.log(data.error); alert(data.error);
+                        } localStorage.setItem('token', data.token); window.location.href = '/';
+            }
+        catch (e) { console.log(e); }
+    });
+</script>

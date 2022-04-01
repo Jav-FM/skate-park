@@ -1,6 +1,12 @@
 const express = require('express');
 const expressFileUpload = require('express-fileupload');
-const { getUsers, createUser } = require('../controllers/users.controller');
+const {
+  getUsers,
+  createUser,
+  loginUser,
+} = require('../controllers/users.controller');
+const { requireAuth } = require('../middlewares/requireAuth');
+const { requireData } = require('../middlewares/requireData');
 const router = express.Router();
 
 //Middleware aplicado a todas las routes
@@ -11,7 +17,11 @@ router.use(
   })
 );
 
-router.get('/users', getUsers);
-router.post('/users', createUser);
+router.get('/users', requireAuth, getUsers);
+router.post('/users', requireData, createUser);
+router.post('/login', loginUser);
+// Pendientes:
+// router.put('/users/:id', requireAuth, updateUser);
+// router.delete('/users/:id', requireAuth, deleteUser);
 
 module.exports = router;
