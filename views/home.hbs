@@ -1,15 +1,85 @@
-<h1>Home</h1>
+<h1>Skate Park</h1>
+
+<div class="py-4">
+  <h2>Lista de participantes</h2>
+
+  <hr />
+
+  <table class="table table-dark">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Foto</th>
+        <th scope="col">Nombre</th>
+        <th scope="col">Años de experiencia</th>
+        <th scope="col">Especialidad</th>
+        <th scope="col">Estado</th>
+      </tr>
+    </thead>
+    <tbody id="table">
+
+    </tbody>
+  </table>
+  <a href="/perfil" class="link">Mi perfil</a> | <a id="close-link" class="link">Cerrar Sesión</a>
+</div>
+
 
 <div id='app'>
 
-</div>
 
-<script>
 
-  document.addEventListener('DOMContentLoaded', async () => { if
-  (!localStorage.getItem('token')) { window.location.href = '/login'; } try {
-  const res = await fetch('/api/v1/users', { headers: { Authorization: `Bearer
-  ${localStorage.getItem('token')}`, }, }); const data = await res.json();
-  console.log(data); if (!data.ok) { } } catch (e) { console.log(e); } });
+  <script>
 
-</script>
+    const table = document.getElementById('table')
+    const showSkaters = (skaters) => {
+      table.innerHTML = ''
+      skaters.forEach(skater => {
+        table.innerHTML += `
+   
+      <tr>
+        <th scope="row">${skater.id}</th>
+        <td>
+          <img src="/avatars/${skater.foto}" class="list-photo"/>
+        </td>
+        <td>${skater.nombre}</td>
+        <td>${skater.anos_experiencia}</td>
+        <td>${skater.especialidad}</td>
+        <td class="text-success font-weight-bold">${skater.estado}</td>
+      </tr>
+    
+            `
+      })
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!localStorage.getItem('token')) {
+        window.location.href = "/login"
+      }
+      try {
+        const res = await fetch('/api/v1/users', {
+          method: 'get',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+        const data = await res.json()
+
+        showSkaters(data.data)
+
+
+      } catch (e) {
+        console.log(e)
+        localStorage.removeItem('token')
+        window.location.href = "/login"
+
+      }
+    })
+
+    const closeLink = document.getElementById('close-link')
+    closeLink.addEventListener("click", () => {
+      localStorage.removeItem('token')
+      window.location.href = "/login"
+    });
+
+
+  </script>

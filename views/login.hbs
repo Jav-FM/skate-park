@@ -1,22 +1,58 @@
-<h1>Login</h1>
+<h1>Skate Park</h1>
 
-<form id='formulario'>
-    <input type='email' placeholder='Ingrese email' name='email' class='form-control mb-2' />
-    <input type='password' placeholder='Ingrese password' name='password' class='form-control mb-2' />
-    <button class='btn btn-primary' type='submit'>Ingresar</button>
-</form>
+<div id="alert-container"></div>
+
+<div class="py-5">
+    <h2>Iniciar Sesión</h2>
+    <hr class="w-50" />
+
+    <form id="formulario">
+        <div class="form-group">
+            <div class="form-group">
+                <label>Email</label>
+                <input type='email' placeholder='Ingresa tu email' name='email' class="form-control w-50 m-auto" />
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type='password' placeholder='Ingresa tu contraseña' name='password'
+                    class="form-control w-50 m-auto" />
+            </div>
+        </div>
+        <button class="btn btn-success mb-3" type="submit">Ingresar</button>
+        <p>¿Aún no tienes cuenta? <a href="/register">Regístrate</a></p>
+    </form>
+</div>
 
 <script>
-    const formulario = document.getElementById('formulario');
+    const formulario = document.getElementById('formulario')
+    const alertContainer = document.getElementById('alert-container')
     formulario.addEventListener('submit', async (e) => {
-        e.preventDefault(); const
-            formData = new FormData(formulario); try {
-                const res = await
-                    fetch('/api/v1/login', { method: 'post', body: formData, }); const data =
-                        await res.json(); if (!data.ok) {
-                            console.log(data.error); alert(data.error);
-                        } localStorage.setItem('token', data.token); window.location.href = '/';
+        e.preventDefault()
+        const formData = new FormData(formulario)
+        try {
+            const res = await fetch('/api/v1/login', {
+                method: 'post',
+                body: formData
+            })
+
+            const data = await res.json()
+            if (!data.ok) {
+                alertContainer.innerHTML = `
+            <div class="alert alert-danger" role="alert">${data.error}</div>
+            `
+                setTimeout(() => {
+                    alertContainer.innerHTML = ""
+                }, 3000);
             }
-        catch (e) { console.log(e); }
-    });
+            localStorage.setItem('token', data.token)
+            window.location.href = "/"
+        } catch (error) {
+            alertContainer.innerHTML = `
+            <div class="alert alert-danger" role="alert">${error.error}</div>
+            `
+        }
+
+    })
+
+
 </script>

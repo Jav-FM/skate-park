@@ -21,6 +21,16 @@ const createUser = async (req, res) => {
     const hashPassword = await bcrypt.hash(password, salt);
     const pathPhoto = req.pathPhoto;
 
+    if (!response.ok) {
+      throw new Error(response.error);
+    }
+
+    //Guardamos la foto en el servidor (usamos path.join para juntar rutas)
+    foto.mv(path.join(__dirname, '../public/avatars/', pathPhoto), (err) => {
+      if (err) throw new Error('No se puede guardar la imagen.');
+    });
+
+    //Guardamos al usuario en la DB
     const response = await createUserDB({
       nombre,
       email,
@@ -28,15 +38,6 @@ const createUser = async (req, res) => {
       especialidad,
       hashPassword,
       pathPhoto,
-    });
-
-    if (!response.ok) {
-      throw new Error(response.error);
-    }
-
-    //Guardamos la foto en el servidor (usamos path.join para juntar rutas)
-    foto.mv(path.join(__me, '../public/avatars/', pathPhoto), (err) => {
-      if (err) throw new Error('No se puede guardar la imagen.');
     });
 
     const payload = { id: response.id };
@@ -71,7 +72,6 @@ const loginUser = async (req, res) => {
     }
 
     // return res.json(response);
-
     //Comparar password con el hashpassword en DB
 
     const { data } = response;

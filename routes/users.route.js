@@ -17,9 +17,10 @@ router.use(
   })
 );
 
+router.post('/login', loginUser);
 router.get('/users', requireAuth, getUsers);
 router.post('/users', requireData, createUser);
-router.post('/login', loginUser);
+
 // Pendientes:
 // router.put('/users/:id', requireAuth, updateUser);
 // router.delete('/users/:id', requireAuth, deleteUser);

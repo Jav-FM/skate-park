@@ -14,10 +14,9 @@ const getUsersDB = async () => {
   const client = await pool.connect();
   try {
     const response = await client.query(
-      'SELECT nombre, email, anos_experiencia, especialidad, foto FROM skaters'
+      'SELECT id, nombre, email, anos_experiencia, especialidad, estado, foto FROM skaters'
     );
 
-    console.log(response);
     return {
       ok: true,
       data: response.rows,
@@ -80,6 +79,14 @@ const getUserDB = async (email) => {
   };
   try {
     const response = await client.query(query);
+
+    if (!response.rows[0]) {
+      return {
+        ok: false,
+        error: 'No existe ese usuario en nuestra base de datos.',
+      };
+    }
+
     return {
       ok: true,
       data: response.rows[0],
