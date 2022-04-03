@@ -1,0 +1,119 @@
+<h1>Skate Park</h1>
+
+<div id="alert-container-admin"></div>
+
+<div class="py-4">
+    <h2>Sección Administrador</h2>
+
+    <hr />
+
+    <table class="table table-dark">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Foto</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Años de experiencia</th>
+                <th scope="col">Especialidad</th>
+                <th scope="col">Estado</th>
+            </tr>
+        </thead>
+        <tbody id="table-admin">
+
+        </tbody>
+    </table>
+    <a href="/" class="link">Volver al home</a>
+</div>
+
+
+<div id='app'>
+
+
+
+    <script>
+        const alertContainer = document.getElementById('alert-container-admin')
+        const table = document.getElementById('table-admin')
+        const showSkaters = (skaters) => {
+            table.innerHTML = ''
+            skaters
+                .filter(s => s.email !== 'admin@gmail.com')
+                .sort((a, b) => {
+                    return a.id - b.id;
+                })
+                .forEach(skater => {
+                    table.innerHTML += `
+      <tr>
+        <th scope="row">${skater.id}</th>
+        <td>
+          <img src="/avatars/${skater.foto}" class="list-photo"/>
+        </td>
+        <td>${skater.nombre}</td>
+        <td>${skater.anos_experiencia}</td>
+        <td>${skater.especialidad}</td>
+        ${skater.estado ? "<td class='text-success font-weight-bold'>Aprobado</td>" : "<td class='text-danger font-weight-bold'>En revisión</td>"}
+        <td>${skater.estado ? `<button onClick="handleSkaterStatus(${skater.id}, ${false})" class="btn btn-danger">Pasar a revisión</button>` : `<button onClick="handleSkaterStatus(${skater.id}, ${true})" class="btn btn-success">Pasar a aprobado</button>`}</td>
+      </tr>
+            `
+                })
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!localStorage.getItem('token')) {
+                window.location.href = "/login"
+            }
+
+            const token = localStorage.getItem('token')
+            try {
+                const res = await fetch('/api/v1/users', {
+                    method: 'get',
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                })
+                const data = await res.json()
+
+                showSkaters(data.data)
+
+
+            } catch (e) {
+                localStorage.removeItem('token')
+                window.location.href = "/login"
+
+            }
+        })
+
+        const handleSkaterStatus = async (id, status) => {
+            const body = JSON.stringify({ id, status })
+            try {
+                const res = await fetch('/api/v1/users/status', {
+                    method: 'put',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: body
+                })
+
+                const data = await res.json()
+                if (!data.ok) {
+                    alertContainer.innerHTML = `
+            <div class="alert alert-danger" role="alert">${data.error}</div>
+            `
+                    setTimeout(() => {
+                        alertContainer.innerHTML = ""
+                    }, 3000);
+                } else {
+                    window.location.href = "/admin"
+                }
+
+            } catch (error) {
+                alertContainer.innerHTML = `
+            <div class="alert alert-danger" role="alert">${error.error}</div>
+            `
+            }
+        }
+
+
+
+
+    </script>

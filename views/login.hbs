@@ -43,9 +43,12 @@
                 setTimeout(() => {
                     alertContainer.innerHTML = ""
                 }, 3000);
+            } else {
+                localStorage.setItem('token', data.token)
+                window.location.href = "/"
+
             }
-            localStorage.setItem('token', data.token)
-            window.location.href = "/"
+
         } catch (error) {
             alertContainer.innerHTML = `
             <div class="alert alert-danger" role="alert">${error.error}</div>

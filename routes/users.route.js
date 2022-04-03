@@ -4,7 +4,13 @@ const {
   getUsers,
   createUser,
   loginUser,
+  adminAccess,
+  editUserStatus,
+  getUserById,
+  editUser,
+  deleteUser,
 } = require('../controllers/users.controller');
+const { requireAdminAuth } = require('../middlewares/requireAdminAuth');
 const { requireAuth } = require('../middlewares/requireAuth');
 const { requireData } = require('../middlewares/requireData');
 const router = express.Router();
@@ -20,9 +26,10 @@ router.use(
 router.post('/login', loginUser);
 router.get('/users', requireAuth, getUsers);
 router.post('/users', requireData, createUser);
-
-// Pendientes:
-// router.put('/users/:id', requireAuth, updateUser);
-// router.delete('/users/:id', requireAuth, deleteUser);
+router.post('/adminaccess', requireAdminAuth, adminAccess);
+router.put('/users/status', editUserStatus);
+router.get('/user', getUserById);
+router.put('/user/:id', editUser);
+router.delete('/user/:id', deleteUser);
 
 module.exports = router;

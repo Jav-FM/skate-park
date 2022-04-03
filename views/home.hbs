@@ -1,5 +1,7 @@
 <h1>Skate Park</h1>
 
+<div id="alert-container"></div>
+
 <div class="py-4">
   <h2>Lista de participantes</h2>
 
@@ -20,7 +22,8 @@
 
     </tbody>
   </table>
-  <a href="/perfil" class="link">Mi perfil</a> | <a id="close-link" class="link">Cerrar Sesión</a>
+  <a href="/perfil" class="link">Mi perfil</a> | <a id="admin-link" class="link">Sección Administrador</a>
+  | <a id="close-link" class="link">Cerrar Sesión</a>
 </div>
 
 
@@ -29,13 +32,17 @@
 
 
   <script>
-
+    const alertContainer = document.getElementById('alert-container')
     const table = document.getElementById('table')
     const showSkaters = (skaters) => {
       table.innerHTML = ''
-      skaters.forEach(skater => {
-        table.innerHTML += `
-   
+      skaters
+        .filter(s => s.email !== 'admin@skaterpark.com')
+        .sort((a, b) => {
+          return a.id - b.id;
+        })
+        .forEach(skater => {
+          table.innerHTML += `
       <tr>
         <th scope="row">${skater.id}</th>
         <td>
@@ -44,17 +51,21 @@
         <td>${skater.nombre}</td>
         <td>${skater.anos_experiencia}</td>
         <td>${skater.especialidad}</td>
-        <td class="text-success font-weight-bold">${skater.estado}</td>
+        ${skater.estado ? "<td class='text-success font-weight-bold'>Aprobado</td>" : "<td class='text-danger font-weight-bold'>En revisión</td>"}
       </tr>
-    
             `
-      })
+        })
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
       if (!localStorage.getItem('token')) {
         window.location.href = "/login"
       }
+
+      const token = localStorage.getItem('token')
+
+
+
       try {
         const res = await fetch('/api/v1/users', {
           method: 'get',
@@ -68,7 +79,6 @@
 
 
       } catch (e) {
-        console.log(e)
         localStorage.removeItem('token')
         window.location.href = "/login"
 
@@ -79,6 +89,37 @@
     closeLink.addEventListener("click", () => {
       localStorage.removeItem('token')
       window.location.href = "/login"
+    });
+
+    const adminLink = document.getElementById('admin-link')
+    adminLink.addEventListener("click", async () => {
+      try {
+        const res = await fetch('/api/v1/adminaccess', {
+          method: 'post',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+        if (!res.ok) {
+          alertContainer.innerHTML = `
+            <div class="alert alert-danger" role="alert">${res.error}</div>
+            `
+          setTimeout(() => {
+            alertContainer.innerHTML = ""
+          }, 3000);
+        } else {
+          window.location.href = "/admin"
+        }
+
+      } catch (e) {
+        alertContainer.innerHTML = `
+            <div class="alert alert-danger" role="alert">${e.error}</div>
+            `
+        setTimeout(() => {
+          alertContainer.innerHTML = ""
+        }, 3000);
+
+      }
     });
 
 

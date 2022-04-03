@@ -101,4 +101,106 @@ const getUserDB = async (email) => {
   }
 };
 
-module.exports = { getUsersDB, createUserDB, getUserDB };
+const editUserStatusDB = async ({ id, status }) => {
+  const client = await pool.connect();
+
+  const query = {
+    text: 'UPDATE skaters SET estado = $1 WHERE id = $2',
+    values: [status, Number(id)],
+  };
+  try {
+    await client.query(query);
+    return {
+      ok: true,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error,
+    };
+  } finally {
+    client.release();
+  }
+};
+
+const getUserByIdDB = async (id) => {
+  const client = await pool.connect();
+  const query = {
+    text: 'SELECT id, nombre, email, anos_experiencia, especialidad, estado, foto FROM skaters WHERE id = $1',
+    values: [Number(id)],
+  };
+  try {
+    const response = await client.query(query);
+
+    return {
+      ok: true,
+      data: response.rows[0],
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error,
+    };
+  } finally {
+    client.release();
+  }
+};
+
+const editUserDB = async ({
+  id,
+  email,
+  nombre,
+  anos_experiencia,
+  especialidad,
+}) => {
+  const client = await pool.connect();
+
+  const query = {
+    text: 'UPDATE skaters SET email = $2, nombre = $3, anos_experiencia = $4, especialidad = $5 WHERE id = $1',
+    values: [Number(id), email, nombre, anos_experiencia, especialidad],
+  };
+  try {
+    await client.query(query);
+    return {
+      ok: true,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error,
+    };
+  } finally {
+    client.release();
+  }
+};
+
+const deleteUserDB = async (id) => {
+  const client = await pool.connect();
+  const query = {
+    text: 'DELETE FROM skaters WHERE id = $1',
+    values: [Number(id)],
+  };
+  try {
+    await client.query(query);
+    return {
+      ok: true,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error,
+    };
+  } finally {
+    client.release();
+  }
+};
+
+module.exports = {
+  getUsersDB,
+  createUserDB,
+  getUserDB,
+  editUserStatusDB,
+  getUserByIdDB,
+  editUserDB,
+  deleteUserDB,
+};

@@ -1,4 +1,12 @@
-const { getUsersDB, createUserDB, getUserDB } = require('../database');
+const {
+  getUsersDB,
+  createUserDB,
+  getUserDB,
+  editUserStatusDB,
+  getUserByIdDB,
+  editUserDB,
+  deleteUserDB,
+} = require('../database');
 const jwt = require('jsonwebtoken');
 var bcrypt = require('bcryptjs');
 const path = require('path');
@@ -21,10 +29,6 @@ const createUser = async (req, res) => {
     const hashPassword = await bcrypt.hash(password, salt);
     const pathPhoto = req.pathPhoto;
 
-    if (!response.ok) {
-      throw new Error(response.error);
-    }
-
     //Guardamos la foto en el servidor (usamos path.join para juntar rutas)
     foto.mv(path.join(__dirname, '../public/avatars/', pathPhoto), (err) => {
       if (err) throw new Error('No se puede guardar la imagen.');
@@ -39,6 +43,10 @@ const createUser = async (req, res) => {
       hashPassword,
       pathPhoto,
     });
+
+    if (!response.ok) {
+      throw new Error(response.error);
+    }
 
     const payload = { id: response.id };
     const token = jwt.sign(payload, process.env.JWT_SECRET);
@@ -83,7 +91,7 @@ const loginUser = async (req, res) => {
 
     //Se genera JWT
 
-    const payload = { id: data.id };
+    const payload = { id: data.id, email: data.email };
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: '1h',
     });
@@ -100,4 +108,109 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, createUser, loginUser };
+const adminAccess = async (req, res) => {
+  return res.json({
+    ok: true,
+  });
+};
+
+const editUserStatus = async (req, res) => {
+  try {
+    const { id, status } = req.body;
+    const response = await editUserStatusDB({
+      id,
+      status,
+    });
+    if (!response.ok) {
+      throw new Error(response.error);
+    }
+    return res.json({
+      ok: true,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+};
+
+const getUserById = async (req, res) => {
+  if (!req.headers?.authorization) {
+    throw new Error('No autorizado');
+  }
+
+  const token = req.headers.authorization.split(' ')[1];
+
+  if (!token) {
+    throw new Error('Formato de token no valido (utilizar Bearer)');
+  }
+
+  let id = 0;
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (!decoded.id) {
+      throw new Error('Token invalido');
+    }
+    id = decoded.id;
+  });
+
+  const response = await getUserByIdDB(id);
+  if (!response.ok) {
+    return res.status(500).json({ error: response.error });
+  }
+  return res.json({ data: response.data });
+};
+
+const editUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email, nombre, anos_experiencia, especialidad } = req.body;
+    const response = await editUserDB({
+      id,
+      email,
+      nombre,
+      anos_experiencia,
+      especialidad,
+    });
+    if (!response.ok) {
+      throw new Error(response.error);
+    }
+    return res.json({
+      ok: true,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const response = await deleteUserDB(id);
+    if (!response.ok) {
+      throw new Error(response.error);
+    }
+    return res.json({
+      ok: true,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  getUsers,
+  createUser,
+  loginUser,
+  adminAccess,
+  editUserStatus,
+  getUserById,
+  editUser,
+  deleteUser,
+};
